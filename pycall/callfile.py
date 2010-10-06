@@ -31,9 +31,11 @@ class CallFile:
 		callerid=None, callerid_name=None, callerid_num=None, wait_time=None,
 		max_retries=None, retry_time=None, account=None, application=None,
 		data=None, context=None, extension=None, priority=None, set_var=None,
-		archive=None, user=None, tmpdir=None,
-		spool_dir='/var/spool/asterisk/outgoing/'
+		archive=None, user=None, tmpdir=None, filename=None,
+		spool_dir=None
 	):
+
+		if not spool_dir: spool_dir = '/var/spool/asterisk/outgoing/'
 
 		args = dict(locals())
 		args.pop('self')
@@ -123,6 +125,17 @@ class CallFile:
 
 		return cf
 
+	@property
+	def contents ( self ):
+		'''
+		A convenience property to fetch the contents of the callfile without
+		having to write it to disk. Implemented as a property so as not to
+		break the convention of calling the "protected" method "_buildfile"
+		directly.
+		'''
+		return '\n'.join(self._buildfile())
+
+
 	def _writefile(self, cf):
 		"""
 		Write a temporary call file.
@@ -141,6 +154,23 @@ class CallFile:
 				f.write(line+'\n')
 
 		return fname
+
+
+	def get_filename ( self, filename ):
+		"""
+		Constructs an appropriate filename for the callfile, based upon
+		optional user-supplied information.
+
+		:filename:		The filename to use if none has been specified.
+		"""
+		if self.filename:
+			filename = self.filename
+
+		if not filename.endswith('.call'):
+			filename += '.call'
+
+		return path.realpath(self.spool_dir) + '/' + filename
+
 
 	def run(self, time=None):
 		"""
@@ -177,7 +207,7 @@ class CallFile:
 			pass
 
 		try:
-			move(fname, path.realpath(self.spool_dir + '/' + path.basename(fname)))
+			move(fname, self.get_filename(path.basename(fname)))
 		except:
 			raise NoSpoolPermissionError
 		return True
