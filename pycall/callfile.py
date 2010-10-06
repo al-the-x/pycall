@@ -177,13 +177,13 @@ class CallFile:
 			pass
 
 		try:
-			move(fname, self.spool_dir+path.basename(fname))
+			move(fname, path.realpath(self.spool_dir + '/' + path.basename(fname)))
 		except:
 			raise NoSpoolPermissionError
-
 		return True
 
 
 if __name__ == '__main__':
 	print 'You have successfully installed pycall. Check out our website ' \
 		'for more information: http://pycall.org/'
+
